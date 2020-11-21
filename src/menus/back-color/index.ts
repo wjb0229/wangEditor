@@ -8,7 +8,7 @@ import DropListMenu from '../menu-constructors/DropListMenu'
 import $ from '../../utils/dom-core'
 import Editor from '../../editor/index'
 import { MenuActive } from '../menu-constructors/Menu'
-
+import { hexToRgb } from '../../utils/util'
 class BackColor extends DropListMenu implements MenuActive {
     constructor(editor: Editor) {
         const $elem = $(
@@ -42,8 +42,18 @@ class BackColor extends DropListMenu implements MenuActive {
     public command(value: string): void {
         const editor = this.editor
         const isEmptySelection = editor.selection.isSelectionEmpty()
+        const $selectionElem = editor.selection.getSelectionContainerElem()?.elems[0]
+        const isSpan = $selectionElem?.nodeName.toLowerCase() !== 'p'
+        const bgColor = $selectionElem?.style.backgroundColor
+        const isSameColor = hexToRgb(value) === bgColor
 
-        if (isEmptySelection) {
+        if (isSpan && !isSameColor) {
+            const $elems = editor.selection.getSelectionRangeTopNodes(editor)
+            editor.selection.createRangeByElem($elems[0])
+            editor.selection.moveCursor($elems[0].elems[0])
+        }
+
+        if (isEmptySelection && !isSameColor) {
             // 插入空白选区
             editor.selection.createEmptyRange()
         }
@@ -53,7 +63,7 @@ class BackColor extends DropListMenu implements MenuActive {
         if (isEmptySelection) {
             // 需要将选区范围折叠起来
             editor.selection.collapseRange()
-            editor.selection.restoreSelection()
+            // editor.selection.restoreSelection()
         }
     }
 
